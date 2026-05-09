@@ -124,10 +124,14 @@ log_info "注入全局环境变量..."
 eval "$(jq -r '.global_env // {} | to_entries[] | "export \(.key)=\(.value | @sh)"' "${CONFIG_FILE}")"
 log_info "全局环境变量注入完成。"
 
-# 自动注册 ACME 账号（如果提供了邮箱）
+# 自动注册 ACME 账号（如果提供了邮箱，且尚未注册过该邮箱）
 if [ -n "${ACCOUNT_EMAIL}" ]; then
-    log_info "正在使用邮箱 ${ACCOUNT_EMAIL} 注册/更新 ACME 账号..."
-    /acme.sh/acme.sh --register-account -m "${ACCOUNT_EMAIL}" --server letsencrypt
+    if grep -q "ACCOUNT_EMAIL='${ACCOUNT_EMAIL}'" /acme.sh/account.conf 2>/dev/null; then
+        log_info "ACME 账号已注册 (${ACCOUNT_EMAIL})，跳过重复注册。"
+    else
+        log_info "正在使用邮箱 ${ACCOUNT_EMAIL} 注册/更新 ACME 账号..."
+        acme.sh --register-account -m "${ACCOUNT_EMAIL}" --server letsencrypt
+    fi
 fi
 
 # =============================================================================
