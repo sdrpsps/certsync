@@ -1,6 +1,7 @@
 # CertSync
 
-[![Docker Hub](https://img.shields.io/docker/pulls/sdrpsps/certsync?logo=docker&label=Docker%20Hub)](https://hub.docker.com/r/sdrpsps/certsync)
+[![Docker Hub](https://img.shields.io/docker/v/sdrpsps/certsync?logo=docker&label=Docker%20Hub)](https://hub.docker.com/r/sdrpsps/certsync)
+[![GHCR](https://img.shields.io/github/v/release/sdrpsps/certsync?logo=github&label=GHCR)](https://github.com/sdrpsps/certsync/pkgs/container/certsync)
 
 基于 Docker 的中心化证书管理方案。通过一份 JSON 配置文件，实现 **"一处申请，多点分发（群晖 NAS + 云服务器集群）"**。
 
