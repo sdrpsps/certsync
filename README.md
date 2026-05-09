@@ -114,8 +114,9 @@ ssh -i ./ssh_keys/id_ed25519 cert@your-server-ip "echo '连接成功'"
 ```jsonc
 {
   "global_env": {
+    "ACCOUNT_EMAIL": "yourname@example.com",
     "CF_Token": "你的 Cloudflare API Token",
-    "CF_Account_ID": "你的 Cloudflare Account ID"
+    "CF_Account_ID": "你的 Cloudflare Account ID",
   },
   "certificate_groups": [
     {
@@ -130,8 +131,8 @@ ssh -i ./ssh_keys/id_ed25519 cert@your-server-ip "echo '连接成功'"
             "SYNO_Password": "NAS_PASSWORD",
             "SYNO_Certificate": "acme_wildcard",
             "SYNO_Scheme": "http",
-            "SYNO_Port": "5000"
-          }
+            "SYNO_Port": "5000",
+          },
         },
         {
           "type": "ssh_cluster",
@@ -142,12 +143,12 @@ ssh -i ./ssh_keys/id_ed25519 cert@your-server-ip "echo '连接成功'"
           "servers": [
             "node1.example.com",
             "node2.example.com",
-            "114.114.114.114"
-          ]
-        }
-      ]
-    }
-  ]
+            "114.114.114.114",
+          ],
+        },
+      ],
+    },
+  ],
 }
 ```
 
@@ -155,6 +156,7 @@ ssh -i ./ssh_keys/id_ed25519 cert@your-server-ip "echo '连接成功'"
 
 | 字段                   | 说明                                                                                   |
 | ---------------------- | -------------------------------------------------------------------------------------- |
+| `ACCOUNT_EMAIL`        | 用于注册 ACME 账号（避免 ZeroSSL 报错）                                                |
 | `global_env`           | 全局环境变量，启动时自动导出（如 Cloudflare Token）                                    |
 | `certificate_groups`   | 证书组数组，每组共享同一个 DNS API                                                     |
 | `dns_api`              | acme.sh 支持的 DNS 验证插件名称                                                        |

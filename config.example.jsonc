@@ -1,12 +1,16 @@
 {
   "global_env": {
+    "ACCOUNT_EMAIL": "yourname@example.com",
     "CF_Token": "你的Cloudflare_API_Token",
     "CF_Account_ID": "你的Cloudflare_Account_ID"
   },
   "certificate_groups": [
     {
       "dns_api": "dns_cf",
-      "domains": ["example.com", "example.org"],
+      "domains": [
+        "example.com",
+        "example.org"
+      ],
       "deployments": [
         {
           "type": "synology_dsm",

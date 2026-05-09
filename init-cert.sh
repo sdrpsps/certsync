@@ -124,6 +124,12 @@ log_info "注入全局环境变量..."
 eval "$(jq -r '.global_env // {} | to_entries[] | "export \(.key)=\(.value | @sh)"' "${CONFIG_FILE}")"
 log_info "全局环境变量注入完成。"
 
+# 自动注册 ACME 账号（如果提供了邮箱）
+if [ -n "${ACCOUNT_EMAIL}" ]; then
+    log_info "正在使用邮箱 ${ACCOUNT_EMAIL} 注册/更新 ACME 账号..."
+    /acme.sh/acme.sh --register-account -m "${ACCOUNT_EMAIL}" --server letsencrypt
+fi
+
 # =============================================================================
 # 第四步：遍历证书组，申请并部署证书
 # =============================================================================
@@ -159,10 +165,12 @@ while [ "${group_index}" -lt "${GROUP_COUNT}" ]; do
         if [ "${SKIP_ISSUE}" = "true" ]; then
             log_info "[SKIP_ISSUE] 跳过 ${DOMAIN} 的证书申请。"
         else
-            log_info "正在为 ${DOMAIN} 申请证书..."
+            # 默认使用 letsencrypt，除非在 global_env 中指定了 CA_SERVER (例如 "zerossl")
+            CA_SERVER="${CA_SERVER:-letsencrypt}"
+            log_info "正在为 ${DOMAIN} 申请证书 (CA: ${CA_SERVER})..."
 
             # 构建 acme.sh --issue 命令参数
-            ISSUE_ARGS="--issue --dns ${DNS_API} -d ${DOMAIN} -d *.${DOMAIN} --force"
+            ISSUE_ARGS="--issue --server ${CA_SERVER} --dns ${DNS_API} -d ${DOMAIN} -d *.${DOMAIN} --force"
 
             # 测试模式：追加 --staging 参数，使用 Let's Encrypt 测试服务器
             if [ "${STAGING}" = "true" ]; then
