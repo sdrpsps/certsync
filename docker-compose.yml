@@ -16,9 +16,9 @@ services:
     container_name: certsync
     restart: on-failure:3
     # --- 开发模式（取消注释以启用） ---
-    environment:
-      # - SKIP_ISSUE=true # 跳过证书申请，仅测试部署逻辑
-      # - STAGING=true # 使用 Let's Encrypt 测试服务器（无速率限制）
+    # environment:
+    #   - SKIP_ISSUE=true # 跳过证书申请，仅测试部署逻辑
+    #   - STAGING=true # 使用 Let's Encrypt 测试服务器（无速率限制）
     volumes:
       # acme.sh 数据持久化目录（证书、账户信息等）
       - ./acmedata:/acme.sh
