@@ -1,0 +1,8 @@
+# 敏感文件和目录
+ssh_keys/
+acmedata/
+config.jsonc
+
+# 系统文件
+.DS_Store
+*.log

@@ -1,0 +1,38 @@
+{
+  "global_env": {
+    "CF_Token": "你的Cloudflare_API_Token",
+    "CF_Account_ID": "你的Cloudflare_Account_ID"
+  },
+  "certificate_groups": [
+    {
+      "dns_api": "dns_cf",
+      "domains": ["example.com", "example.org"],
+      "deployments": [
+        {
+          "type": "synology_dsm",
+          "enabled": true,
+          "env": {
+            "SYNO_Username": "cert_admin",
+            "SYNO_Password": "YOUR_NAS_PASSWORD",
+            "SYNO_Certificate": "acme_wildcard",
+            "SYNO_Scheme": "http",
+            "SYNO_Port": "5000"
+          }
+        },
+        {
+          "type": "ssh_cluster",
+          "enabled": true,
+          "user": "cert",
+          "cert_path": "/etc/nginx/ssl/__DOMAIN__/cert.pem",
+          "key_path": "/etc/nginx/ssl/__DOMAIN__/key.pem",
+          "reload_cmd": "sudo systemctl reload nginx",
+          "servers": [
+            "node1.example.com",
+            "node2.example.com",
+            "114.114.114.114"
+          ]
+        }
+      ]
+    }
+  ]
+}
