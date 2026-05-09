@@ -174,7 +174,7 @@ while [ "${group_index}" -lt "${GROUP_COUNT}" ]; do
             log_info "正在为 ${DOMAIN} 申请证书 (CA: ${CA_SERVER})..."
 
             # 构建 acme.sh --issue 命令参数
-            ISSUE_ARGS="--issue --server ${CA_SERVER} --dns ${DNS_API} -d ${DOMAIN} -d *.${DOMAIN} --force"
+            ISSUE_ARGS="--issue --server ${CA_SERVER} --dns ${DNS_API} -d ${DOMAIN} -d *.${DOMAIN}"
 
             # 测试模式：追加 --staging 参数，使用 Let's Encrypt 测试服务器
             if [ "${STAGING}" = "true" ]; then
