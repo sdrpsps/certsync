@@ -1,7 +1,7 @@
 # 敏感文件和目录
 ssh_keys/
 acmedata/
-config.jsonc
+config.json
 
 # 系统文件
 .DS_Store

@@ -17,7 +17,7 @@
 │   └───────────┘       └─────┬──────┘       └───────┘  │
 │                             │                         │
 │                      ┌──────▼───────┐                 │
-│                      │ config.jsonc │                 │
+│                      │ config.json  │                 │
 │                      └──────┬───────┘                 │
 │              ┌──────────────┴──────────────┐          │
 │              ▼                             ▼          │
@@ -108,16 +108,14 @@ ssh -i ./ssh_keys/id_ed25519 cert@your-server-ip "echo '连接成功'"
 
 > 💡 **一键脚本：** 如果你有多台服务器，可以把上述步骤写成脚本批量执行。公钥内容可以用 `cat ./ssh_keys/id_ed25519.pub` 获取。
 
-## 4. 配置文件说明 (`config.jsonc`)
+## 4. 配置文件说明 (`config.json`)
 
-> 💡 **提示：** 本项目支持使用 `.jsonc` 格式！你可以在配置文件中自由使用 `//` 进行单行注释，脚本会自动解析。
-
-```jsonc
+```json
 {
   "global_env": {
     "ACCOUNT_EMAIL": "yourname@example.com",
     "CF_Token": "你的 Cloudflare API Token",
-    "CF_Account_ID": "你的 Cloudflare Account ID",
+    "CF_Account_ID": "你的 Cloudflare Account ID"
   },
   "certificate_groups": [
     {
@@ -128,12 +126,14 @@ ssh -i ./ssh_keys/id_ed25519 cert@your-server-ip "echo '连接成功'"
           "type": "synology_dsm",
           "enabled": false, // 设为 false 可临时跳过该部署
           "env": {
+            "SYNO_Hostname": "your-synology-ip",
             "SYNO_Username": "cert_admin",
-            "SYNO_Password": "NAS_PASSWORD",
-            "SYNO_Certificate": "acme_wildcard",
+            "SYNO_Password": "YOUR_NAS_PASSWORD",
+            "SYNO_Certificate": "__DOMAIN__",
             "SYNO_Scheme": "http",
             "SYNO_Port": "5000",
-          },
+            "SYNO_CREATE": "1"
+          }
         },
         {
           "type": "ssh_cluster",
@@ -144,12 +144,12 @@ ssh -i ./ssh_keys/id_ed25519 cert@your-server-ip "echo '连接成功'"
           "servers": [
             "node1.example.com",
             "node2.example.com",
-            "114.114.114.114",
-          ],
-        },
-      ],
-    },
-  ],
+            "114.114.114.114"
+          ]
+        }
+      ]
+    }
+  ]
 }
 ```
 
@@ -175,7 +175,7 @@ ssh -i ./ssh_keys/id_ed25519 cert@your-server-ip "echo '连接成功'"
 
 ```text
 .
-├── config.jsonc         # 核心配置（填入真实凭证）
+├── config.json         # 核心配置（填入真实凭证）
 ├── docker-compose.yml   # 容器定义（image 指向 Docker Hub）
 └── ssh_keys/
     └── id_ed25519       # SSH 私钥
@@ -353,7 +353,7 @@ docker compose up -d
 
 ### 更新配置后如何生效？
 
-修改 `config.jsonc` 后，重启容器即可：
+修改 `config.json` 后，重启容器即可：
 
 ```bash
 docker compose restart
@@ -369,7 +369,7 @@ docker compose restart
 
 ### 如何添加新域名？
 
-在 `config.jsonc` 的 `domains` 数组中追加域名，然后重启容器。
+在 `config.json` 的 `domains` 数组中追加域名，然后重启容器。
 
 ### SSH 连接失败怎么办？
 

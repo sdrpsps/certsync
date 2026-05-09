@@ -63,43 +63,17 @@ if [ ! -f "${SSH_KEY}" ]; then
     exit 1
 fi
 
-# 检查配置文件是否存在 (兼容 .jsonc 和 .json)
+# 检查配置文件是否存在
 if [ ! -f "${CONFIG_FILE}" ]; then
-    if [ -f "/config.jsonc" ]; then
-        CONFIG_FILE="/config.jsonc"
-    else
-        log_error "配置文件不存在: ${CONFIG_FILE} 或 /config.jsonc"
-        exit 1
-    fi
-fi
-
-PARSED_JSON="/tmp/config_parsed.json"
-
-log_info "正在解析并剔除配置文件中的注释..."
-awk '{
-    in_str = 0
-    out = ""
-    for (i=1; i<=length($0); i++) {
-        c = substr($0, i, 1)
-        if (c == "\"" && substr($0, i-1, 1) != "\\") {
-            in_str = !in_str
-        }
-        if (!in_str && c == "/" && substr($0, i+1, 1) == "/") {
-            break
-        }
-        out = out c
-    }
-    print out
-}' "${CONFIG_FILE}" > "${PARSED_JSON}"
-
-# 验证配置文件 JSON 格式
-if ! jq empty "${PARSED_JSON}" 2>/dev/null; then
-    log_error "配置文件 JSON 格式无效: ${CONFIG_FILE} (请检查是否遗漏了逗号或双引号)"
+    log_error "配置文件不存在: ${CONFIG_FILE}"
     exit 1
 fi
 
-# 将后续读取配置的指针指向解析后的纯净 JSON
-CONFIG_FILE="${PARSED_JSON}"
+# 验证配置文件 JSON 格式
+if ! jq empty "${CONFIG_FILE}" 2>/dev/null; then
+    log_error "配置文件 JSON 格式无效: ${CONFIG_FILE} (请检查是否遗漏了逗号或双引号)"
+    exit 1
+fi
 
 log_info "前置检查全部通过。"
 
@@ -126,11 +100,13 @@ log_info "全局环境变量注入完成。"
 
 # 自动注册 ACME 账号（如果提供了邮箱，且尚未注册过该邮箱）
 if [ -n "${ACCOUNT_EMAIL}" ]; then
-    if grep -q "ACCOUNT_EMAIL='${ACCOUNT_EMAIL}'" /acme.sh/account.conf 2>/dev/null; then
+    MARKER_FILE="/acme.sh/.registered_${ACCOUNT_EMAIL}"
+    if [ -f "${MARKER_FILE}" ]; then
         log_info "ACME 账号已注册 (${ACCOUNT_EMAIL})，跳过重复注册。"
     else
         log_info "正在使用邮箱 ${ACCOUNT_EMAIL} 注册/更新 ACME 账号..."
         acme.sh --register-account -m "${ACCOUNT_EMAIL}" --server letsencrypt
+        touch "${MARKER_FILE}"
     fi
 fi
 
@@ -175,6 +151,11 @@ while [ "${group_index}" -lt "${GROUP_COUNT}" ]; do
 
             # 构建 acme.sh --issue 命令参数
             ISSUE_ARGS="--issue --server ${CA_SERVER} --dns ${DNS_API} -d ${DOMAIN} -d *.${DOMAIN}"
+
+            # 追加调试参数
+            if [ "${ACME_DEBUG}" = "1" ]; then
+                ISSUE_ARGS="${ISSUE_ARGS} --debug 2"
+            fi
 
             # 测试模式：追加 --staging 参数，使用 Let's Encrypt 测试服务器
             if [ "${STAGING}" = "true" ]; then
@@ -223,13 +204,30 @@ while [ "${group_index}" -lt "${GROUP_COUNT}" ]; do
                 # 注入群晖专用环境变量
                 eval "$(jq -r ".certificate_groups[${group_index}].deployments[${deploy_index}].env // {} | to_entries[] | \"export \(.key)=\(.value | @sh)\"" "${CONFIG_FILE}")"
 
+                # 备份原始证书名称模板，防止在循环中被修改
+                SYNO_Certificate_TEMPLATE="${SYNO_Certificate}"
+
                 # 对该组的每个域名执行 synology_dsm 部署钩子
                 domain_index=0
                 while [ "${domain_index}" -lt "${DOMAIN_COUNT}" ]; do
                     DOMAIN=$(jq -r ".certificate_groups[${group_index}].domains[${domain_index}]" "${CONFIG_FILE}")
                     log_info "向群晖 DSM 推送 ${DOMAIN} 的证书..."
 
-                    acme.sh --deploy -d "${DOMAIN}" --deploy-hook synology_dsm \
+                    # 动态替换证书描述中的占位符（如果存在）
+                    if [ -n "${SYNO_Certificate_TEMPLATE}" ]; then
+                        CURRENT_SYNO_Certificate="${SYNO_Certificate_TEMPLATE//__DOMAIN__/$DOMAIN}"
+                        export SYNO_Certificate="${CURRENT_SYNO_Certificate}"
+                        export SYNO_CERTIFICATE="${CURRENT_SYNO_Certificate}" # 兼容 acme.sh 强制大写
+                    fi
+
+                    # 构建部署参数
+                    DEPLOY_ARGS="--deploy -d ${DOMAIN} --deploy-hook synology_dsm"
+                    if [ "${ACME_DEBUG}" = "1" ]; then
+                        DEPLOY_ARGS="${DEPLOY_ARGS} --debug 2"
+                    fi
+
+                    # shellcheck disable=SC2086
+                    acme.sh ${DEPLOY_ARGS} \
                         || log_warn "群晖 DSM 部署 ${DOMAIN} 返回非零状态码，继续..."
 
                     domain_index=$((domain_index + 1))

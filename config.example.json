@@ -7,20 +7,19 @@
   "certificate_groups": [
     {
       "dns_api": "dns_cf",
-      "domains": [
-        "example.com",
-        "example.org"
-      ],
+      "domains": ["example.com", "example.org"],
       "deployments": [
         {
           "type": "synology_dsm",
           "enabled": true,
           "env": {
+            "SYNO_Hostname": "your-synology-ip",
             "SYNO_Username": "cert_admin",
             "SYNO_Password": "YOUR_NAS_PASSWORD",
-            "SYNO_Certificate": "acme_wildcard",
+            "SYNO_Certificate": "__DOMAIN__",
             "SYNO_Scheme": "http",
-            "SYNO_Port": "5000"
+            "SYNO_Port": "5000",
+            "SYNO_CREATE": "1"
           }
         },
         {
