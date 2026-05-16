@@ -49,8 +49,8 @@ const domainSchema = z.object({
 export default function ConfigPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: config, isLoading: configLoading } = useCloudflareConfig();
-  const { data: domains = [], isLoading: domainsLoading } = useDomains();
+  const { data: config } = useCloudflareConfig();
+  const { data: domains = [] } = useDomains();
   const saveConfig = useSaveCloudflareConfig();
   const createDomain = useCreateDomain();
   const deleteDomain = useDeleteDomain();
@@ -109,9 +109,6 @@ export default function ConfigPage() {
         toast.error(message);
       },
     });
-  }
-  if (configLoading || domainsLoading) {
-    return <div className="p-8">Loading...</div>;
   }
 
   return (

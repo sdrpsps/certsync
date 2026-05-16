@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCertificates } from '@/lib/api/hooks';
 
 export default function DashboardPage() {
-  const { data: certificates = [], isLoading } = useCertificates();
+  const { data: certificates = [] } = useCertificates();
 
   const now = new Date();
   const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
@@ -19,10 +19,6 @@ export default function DashboardPage() {
   };
 
   const recentCerts = certificates.slice(0, 5);
-
-  if (isLoading) {
-    return <div className="p-8">Loading...</div>;
-  }
   return (
     <div className="space-y-8">
       <div>

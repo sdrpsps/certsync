@@ -1,38 +1,53 @@
-import Link from 'next/link';
+"use client"
+
+import { usePathname } from "next/navigation";
+import { AppSidebar } from "@/components/app-sidebar";
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbList,
+  BreadcrumbPage,
+} from "@/components/ui/breadcrumb";
+import { Separator } from "@/components/ui/separator";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+
+const breadcrumbMap: Record<string, string> = {
+  "/": "Dashboard",
+  "/certificates": "Certificates",
+  "/config": "Configuration",
+};
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const breadcrumbTitle = breadcrumbMap[pathname] || "Dashboard";
+
   return (
-    <div className="flex h-screen">
-      <aside className="w-64 border-r bg-slate-50 dark:bg-slate-900">
-        <div className="p-6">
-          <h1 className="text-2xl font-bold text-cert-primary">CERT_SYNC</h1>
-        </div>
-        <nav className="space-y-1 px-3">
-          <Link
-            href="/"
-            className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/certificates"
-            className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            Certificates
-          </Link>
-          <Link
-            href="/config"
-            className="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-800"
-          >
-            Configuration
-          </Link>
-        </nav>
-      </aside>
-      <main className="flex-1 overflow-auto p-8">{children}</main>
-    </div>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 data-vertical:h-4 data-vertical:self-auto" />
+          <Breadcrumb>
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{breadcrumbTitle}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
+        </header>
+        <main className="flex flex-1 flex-col gap-4 p-8">
+          {children}
+        </main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

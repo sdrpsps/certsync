@@ -24,8 +24,8 @@ const issueCertSchema = z.object({
 export default function CertificatesPage() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const { data: certificates = [], isLoading: certsLoading } = useCertificates();
-  const { data: domains = [], isLoading: domainsLoading } = useDomains();
+  const { data: certificates = [] } = useCertificates();
+  const { data: domains = [] } = useDomains();
   const issueCertificate = useIssueCertificate();
 
   const issueForm = useForm({
@@ -49,10 +49,6 @@ export default function CertificatesPage() {
       });
     },
   });
-
-  if (certsLoading || domainsLoading) {
-    return <div className="p-8">Loading...</div>;
-  }
 
   return (
     <div className="space-y-6">
