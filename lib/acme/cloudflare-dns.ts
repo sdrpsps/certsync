@@ -82,7 +82,7 @@ export function createCloudflareDnsChallenge(config: CloudflareConfig) {
 
   return {
     async createChallenge(authz: any, challenge: any, keyAuthorization: string): Promise<void> {
-      const domain = authz.identifier.value;
+      const domain = authz.identifier.value.replace(/^\*\./, '');
       const recordName = `_acme-challenge.${domain}`;
       const recordValue = keyAuthorization;
 
@@ -93,12 +93,11 @@ export function createCloudflareDnsChallenge(config: CloudflareConfig) {
 
       recordCache.set(domain, { zoneId, recordId });
 
-      console.log(`DNS record created, waiting for propagation...`);
-      await sleep(15000);
+      console.log(`DNS record created for ${recordName}`);
     },
 
     async removeChallenge(authz: any, challenge: any, keyAuthorization: string): Promise<void> {
-      const domain = authz.identifier.value;
+      const domain = authz.identifier.value.replace(/^\*\./, '');
       const cached = recordCache.get(domain);
 
       if (!cached) {

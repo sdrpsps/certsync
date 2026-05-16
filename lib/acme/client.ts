@@ -2,17 +2,20 @@ import * as acme from 'acme-client';
 import { getAcmeDirectoryUrl } from './config';
 import { createCloudflareDnsChallenge } from './cloudflare-dns';
 import type { AcmeConfig, CertificateResult, CloudflareConfig } from './types';
+import { AcmeLogger } from './logger';
 
 export async function orderCertificate(
   domains: string[],
   email: string,
   cloudflareConfig: CloudflareConfig,
-  acmeConfig?: Partial<AcmeConfig>
+  acmeConfig?: Partial<AcmeConfig>,
+  logger?: AcmeLogger
 ): Promise<CertificateResult> {
+  const log = logger || new AcmeLogger();
   const directoryUrl = getAcmeDirectoryUrl(acmeConfig?.environment);
 
-  console.log(`Using ACME directory: ${directoryUrl}`);
-  console.log(`Ordering certificate for: ${domains.join(', ')}`);
+  log.log(`Using ACME directory: ${directoryUrl}`);
+  log.log(`Ordering certificate for: ${domains.join(', ')}`);
 
   const accountKey = await acme.crypto.createPrivateKey();
   const client = new acme.Client({
@@ -25,7 +28,7 @@ export async function orderCertificate(
     contact: [`mailto:${email}`],
   });
 
-  console.log('ACME account created');
+  log.log('ACME account created');
 
   const certificateKey = await acme.crypto.createPrivateKey();
 
@@ -33,10 +36,12 @@ export async function orderCertificate(
     identifiers: domains.map((domain) => ({ type: 'dns', value: domain })),
   });
 
-  console.log('Certificate order created');
+  log.log('Certificate order created');
 
   const authorizations = await client.getAuthorizations(order);
   const dnsChallenge = createCloudflareDnsChallenge(cloudflareConfig);
+
+  const challenges = [];
 
   for (const authz of authorizations) {
     const challenge = authz.challenges.find((c) => c.type === 'dns-01');
@@ -44,14 +49,21 @@ export async function orderCertificate(
       throw new Error('DNS-01 challenge not available');
     }
 
+    log.log(`Creating DNS challenge for ${authz.identifier.value}...`);
     const keyAuthorization = await client.getChallengeKeyAuthorization(challenge);
     await dnsChallenge.createChallenge(authz, challenge, keyAuthorization);
+    challenges.push(challenge);
+  }
 
-    await client.verifyChallenge(authz, challenge);
+  log.log('All DNS records created, waiting for propagation...');
+  await new Promise(resolve => setTimeout(resolve, 30000));
+
+  for (const challenge of challenges) {
+    log.log(`Notifying ACME server to verify challenge...`);
     await client.completeChallenge(challenge);
   }
 
-  console.log('Challenges completed, waiting for validation...');
+  log.log('Waiting for validation...');
   await client.waitForValidStatus(order);
 
   const [certificateKey2048, csr] = await acme.crypto.createCsr({
@@ -62,7 +74,7 @@ export async function orderCertificate(
   await client.finalizeOrder(order, csr);
   const certificate = await client.getCertificate(order);
 
-  console.log('Cleaning up DNS records...');
+  log.log('Cleaning up DNS records...');
   for (const authz of authorizations) {
     const challenge = authz.challenges.find((c) => c.type === 'dns-01');
     if (challenge) {
@@ -71,7 +83,7 @@ export async function orderCertificate(
     }
   }
 
-  console.log('Certificate issued successfully');
+  log.log('Certificate issued successfully');
 
   return {
     certificate,
